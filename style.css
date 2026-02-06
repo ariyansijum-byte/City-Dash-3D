@@ -1,0 +1,147 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+/* Game Container */
+#game {
+  position: relative;
+  width: 320px;
+  height: 550px;
+  background: #111;
+  overflow: hidden;
+  border-radius: 15px;
+  box-shadow: 
+    0 0 20px #00ffcc,
+    0 0 40px rgba(0,255,204,0.5);
+}
+
+/* Road Lines */
+.road-line {
+  position: absolute;
+  width: 5px;
+  height: 100%;
+  background: rgba(255,255,255,0.2);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Player */
+#player {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(45deg, #00ffcc, #00ffaa);
+  bottom: 20px;
+  left: 130px;
+  border-radius: 12px;
+  box-shadow:
+    0 0 15px #00ffcc,
+    0 0 30px rgba(0,255,204,0.7);
+  transition: left 0.2s ease;
+}
+
+/* Obstacle */
+.obstacle {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(45deg, #ff0044, #ff6600);
+  top: -60px;
+  border-radius: 12px;
+  box-shadow:
+    0 0 15px #ff0044,
+    0 0 30px rgba(255,0,68,0.7);
+}
+
+/* Score */
+#score {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 0 10px #00ffcc;
+}
+
+/* Start Screen */
+#startScreen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+#startScreen h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 15px #00ffcc;
+}
+
+#startBtn {
+  padding: 10px 20px;
+  background: #00ffcc;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+#startBtn:hover {
+  background: #00ffaa;
+  transform: scale(1.1);
+}
+
+/* Game Over Screen */
+#gameOverScreen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+}
+
+#gameOverScreen h2 {
+  margin-bottom: 15px;
+  color: #ff0044;
+  text-shadow: 0 0 15px #ff0044;
+}
+
+#restartBtn {
+  padding: 10px 20px;
+  background: #ff0044;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+#restartBtn:hover {
+  background: #ff3300;
+  transform: scale(1.1);
+}
