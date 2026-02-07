@@ -1,104 +1,117 @@
-const game = document.getElementById("game");
-const player = document.getElementById("player");
-const scoreDisplay = document.getElementById("score");
-const startScreen = document.getElementById("startScreen");
-const gameOverScreen = document.getElementById("gameOverScreen");
-const startBtn = document.getElementById("startBtn");
-const restartBtn = document.getElementById("restartBtn");
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-let lane = 1; // 0 = left, 1 = middle, 2 = right
-let lanePositions = [30, 130, 230];
+scene.background = new THREE.Color(0x87CEEB);
+
+// Light
+let light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(0,10,10);
+scene.add(light);
+
+// Ground
+let groundGeo = new THREE.PlaneGeometry(10,200);
+let groundMat = new THREE.MeshStandardMaterial({color: 0x333333});
+let ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+// Player
+let playerGeo = new THREE.BoxGeometry(1,2,1);
+let playerMat = new THREE.MeshStandardMaterial({color: 0x00ff00});
+let player = new THREE.Mesh(playerGeo, playerMat);
+player.position.y = 1;
+scene.add(player);
+
+camera.position.set(0,5,8);
+
+let obstacles = [];
+let coins = [];
+let speed = 0.5;
 let score = 0;
-let gameRunning = false;
-let obstacleInterval;
-let speed = 5;
 
-/* ================= START GAME ================= */
+// Score Display
+let scoreDiv = document.createElement("div");
+scoreDiv.style.position = "absolute";
+scoreDiv.style.top = "20px";
+scoreDiv.style.left = "20px";
+scoreDiv.style.color = "white";
+scoreDiv.style.fontSize = "24px";
+scoreDiv.innerHTML = "Score: 0";
+document.body.appendChild(scoreDiv);
 
-startBtn.addEventListener("click", () => {
-  startScreen.style.display = "none";
-  gameRunning = true;
-  startGame();
-});
-
-restartBtn.addEventListener("click", () => {
-  location.reload();
-});
-
-/* ================= PLAYER MOVE ================= */
-
-document.addEventListener("keydown", (e) => {
-  if (!gameRunning) return;
-
-  if (e.key === "ArrowLeft" && lane > 0) {
-    lane--;
-  }
-
-  if (e.key === "ArrowRight" && lane < 2) {
-    lane++;
-  }
-
-  player.style.left = lanePositions[lane] + "px";
-});
-
-/* ================= CREATE OBSTACLE ================= */
-
-function startGame() {
-  obstacleInterval = setInterval(createObstacle, 1500);
+// Create Obstacle
+function createObstacle(){
+  let geo = new THREE.BoxGeometry(1,2,1);
+  let mat = new THREE.MeshStandardMaterial({color: 0xff0000});
+  let obstacle = new THREE.Mesh(geo, mat);
+  obstacle.position.set((Math.floor(Math.random()*3)-1)*2,1,-100);
+  scene.add(obstacle);
+  obstacles.push(obstacle);
 }
 
-function createObstacle() {
-  if (!gameRunning) return;
-
-  const obstacle = document.createElement("div");
-  obstacle.classList.add("obstacle");
-
-  let randomLane = Math.floor(Math.random() * 3);
-  obstacle.style.left = lanePositions[randomLane] + "px";
-
-  game.appendChild(obstacle);
-
-  let top = -60;
-
-  const moveObstacle = setInterval(() => {
-    if (!gameRunning) {
-      clearInterval(moveObstacle);
-      return;
-    }
-
-    top += speed;
-    obstacle.style.top = top + "px";
-
-    // Collision Detection
-    if (
-      top > 420 &&
-      randomLane === lane
-    ) {
-      endGame();
-      clearInterval(moveObstacle);
-    }
-
-    // Passed obstacle
-    if (top > 550) {
-      obstacle.remove();
-      score++;
-      scoreDisplay.innerText = "Score: " + score;
-
-      // Speed increase every 5 points
-      if (score % 5 === 0) {
-        speed += 1;
-      }
-
-      clearInterval(moveObstacle);
-    }
-
-  }, 30);
+// Create Coin
+function createCoin(){
+  let geo = new THREE.CylinderGeometry(0.5,0.5,0.2,32);
+  let mat = new THREE.MeshStandardMaterial({color: 0xffff00});
+  let coin = new THREE.Mesh(geo, mat);
+  coin.rotation.x = Math.PI/2;
+  coin.position.set((Math.floor(Math.random()*3)-1)*2,1,-100);
+  scene.add(coin);
+  coins.push(coin);
 }
 
-/* ================= GAME OVER ================= */
+setInterval(createObstacle,2000);
+setInterval(createCoin,1500);
 
-function endGame() {
-  gameRunning = false;
-  clearInterval(obstacleInterval);
-  gameOverScreen.style.display = "flex";
+// Controls
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft" && player.position.x>-2)
+    player.position.x-=2;
+  if(e.key==="ArrowRight" && player.position.x<2)
+    player.position.x+=2;
+});
+
+// Animation Loop
+function animate(){
+  requestAnimationFrame(animate);
+
+  // Move obstacles
+  obstacles.forEach((o,index)=>{
+    o.position.z += speed;
+    if(o.position.distanceTo(player.position)<1.5){
+      alert("Game Over! Final Score: "+score);
+      location.reload();
+    }
+    if(o.position.z>10){
+      scene.remove(o);
+      obstacles.splice(index,1);
+    }
+  });
+
+  // Move coins
+  coins.forEach((c,index)=>{
+    c.position.z += speed;
+    c.rotation.z += 0.1;
+
+    if(c.position.distanceTo(player.position)<1.5){
+      score+=10;
+      scoreDiv.innerHTML="Score: "+score;
+      scene.remove(c);
+      coins.splice(index,1);
+    }
+
+    if(c.position.z>10){
+      scene.remove(c);
+      coins.splice(index,1);
+    }
+  });
+
+  speed += 0.0005;
+
+  renderer.render(scene,camera);
 }
+
+animate();
