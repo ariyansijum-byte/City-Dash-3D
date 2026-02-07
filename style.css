@@ -5,7 +5,28 @@
   box-sizing: border-box;
   font-family: Arial, sans-serif;
 }
+#jumpBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  font-size: 18px;
+  background: orange;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+}
 
+.jump {
+  animation: jumpAnim 0.6s ease;
+}
+
+@keyframes jumpAnim {
+  0% { bottom: 0; }
+  50% { bottom: 120px; }
+  100% { bottom: 0; }
+}
 body {
   background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
   height: 100vh;
