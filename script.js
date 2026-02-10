@@ -1,127 +1,106 @@
-// ------------------- Player setup -------------------
-const player = document.getElementById("player");
-let isJumping = false;
-let playerY = 0;
-let jumpVelocity = 15;
-let gravity = 1;
+// Scene setup
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
 
-// Player jump function
-function jump() {
-  if (!isJumping) {
-    isJumping = true;
-    let jumpInterval = setInterval(() => {
-      playerY += jumpVelocity;
-      jumpVelocity -= gravity;
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
 
-      if (playerY <= 0) { // ground detect
-        playerY = 0;
-        isJumping = false;
-        jumpVelocity = 15;
-        clearInterval(jumpInterval);
-      }
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-      player.style.bottom = playerY + "px";
-    }, 20);
-  }
+// Light
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(0, 10, 10);
+scene.add(light);
+
+// Road
+const roadGeometry = new THREE.BoxGeometry(10, 0.5, 200);
+const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+const road = new THREE.Mesh(roadGeometry, roadMaterial);
+road.position.z = -80;
+scene.add(road);
+
+// Player
+const playerGeometry = new THREE.BoxGeometry(1, 2, 1);
+const playerMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+const player = new THREE.Mesh(playerGeometry, playerMaterial);
+player.position.y = 1;
+scene.add(player);
+
+// Obstacle (Train block)
+const obstacleGeometry = new THREE.BoxGeometry(1, 2, 1);
+const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+obstacle.position.set(0, 1, -20);
+scene.add(obstacle);
+
+// Camera position
+camera.position.set(0, 5, 8);
+camera.lookAt(player.position);
+
+// Lane system
+let lanes = [-3, 0, 3];
+let currentLane = 1;
+
+function updateLane() {
+  player.position.x = lanes[currentLane];
 }
 
-// Keyboard input
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space" || e.code === "ArrowUp") {
-    jump();
+// Jump system
+let isJumping = false;
+let velocityY = 0;
+let gravity = -0.01;
+
+document.getElementById("leftBtn").addEventListener("click", () => {
+  if (currentLane > 0) {
+    currentLane--;
+    updateLane();
   }
 });
 
-// ------------------- Police setup -------------------
-const police = document.getElementById("police");
-let policeX = -100;
-
-function movePolice() {
-  policeX += 5; // police speed
-  if (policeX > window.innerWidth) policeX = -100;
-  police.style.left = policeX + "px";
-}
-setInterval(movePolice, 50);
-
-// ------------------- Buildings setup -------------------
-const buildings = document.querySelectorAll(".building");
-
-function moveBuildings() {
-  buildings.forEach(building => {
-    let left = parseInt(building.style.left);
-    left -= 5; // building speed
-    if (left < -50) left = window.innerWidth + Math.random() * 200;
-    building.style.left = left + "px";
-  });
-}
-setInterval(moveBuildings, 50);
-
-// ------------------- Train obstacle -------------------
-const train = document.getElementById("train");
-let trainX = 800;
-
-function moveTrain() {
-  trainX -= 10; // train speed
-  if (trainX < -100) trainX = window.innerWidth + Math.random() * 400;
-  train.style.left = trainX + "px";
-
-  // Collision with player
-  const playerRect = player.getBoundingClientRect();
-  const trainRect = train.getBoundingClientRect();
-  if (
-    playerRect.x < trainRect.x + trainRect.width &&
-    playerRect.x + playerRect.width > trainRect.x &&
-    playerRect.y < trainRect.y + trainRect.height &&
-    playerRect.y + playerRect.height > trainRect.y
-  ) {
-    alert("Game Over! Train dhoreche 😱");
-    window.location.reload();
+document.getElementById("rightBtn").addEventListener("click", () => {
+  if (currentLane < 2) {
+    currentLane++;
+    updateLane();
   }
-}
-setInterval(moveTrain, 50);
+});
 
-// ------------------- Coin setup -------------------
-const coin = document.getElementById("coin");
-let score = 0;
-
-function moveCoin() {
-  // random horizontal spawn
-  if (parseInt(coin.style.left) < -50) {
-    coin.style.left = Math.random() * (window.innerWidth - 50) + "px";
-    coin.style.bottom = 50 + Math.random() * 150 + "px"; // height random
+document.getElementById("jumpBtn").addEventListener("click", () => {
+  if (!isJumping) {
+    velocityY = 0.25;
+    isJumping = true;
   }
-  
-  // collision detect
-  const playerRect = player.getBoundingClientRect();
-  const coinRect = coin.getBoundingClientRect();
+});
 
-  if (
-    playerRect.x < coinRect.x + coinRect.width &&
-    playerRect.x + playerRect.width > coinRect.x &&
-    playerRect.y < coinRect.y + coinRect.height &&
-    playerRect.y + playerRect.height > coinRect.y
-  ) {
-    score += 1;
-    console.log("Score:", score);
-    // move coin out of screen
-    coin.style.left = "-100px";
+// Animation
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Jump physics
+  if (isJumping) {
+    player.position.y += velocityY;
+    velocityY += gravity;
+
+    if (player.position.y <= 1) {
+      player.position.y = 1;
+      isJumping = false;
+    }
   }
-}
-setInterval(moveCoin, 50);
 
-// ------------------- Police collision -------------------
-function checkPoliceCollision() {
-  const playerRect = player.getBoundingClientRect();
-  const policeRect = police.getBoundingClientRect();
+  // Obstacle move towards player
+  obstacle.position.z += 0.2;
 
-  if (
-    playerRect.x < policeRect.x + policeRect.width &&
-    playerRect.x + playerRect.width > policeRect.x &&
-    playerRect.y < policeRect.y + policeRect.height &&
-    playerRect.y + playerRect.height > policeRect.y
-  ) {
-    alert("Game Over! Police dhoreche 😡");
-    window.location.reload();
+  if (obstacle.position.z > 5) {
+    obstacle.position.z = -100;
+    obstacle.position.x = lanes[Math.floor(Math.random() * 3)];
   }
+
+  renderer.render(scene, camera);
 }
-setInterval(checkPoliceCollision, 50);
+
+animate();
